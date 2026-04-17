@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏦 Garanti BBVA – Ekstre Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2236;
+    --bg-card-hover: #1f2a42;
+    --bg-input: #0d1321;
+    --border: #2a3654;
+    --border-focus: #3b82f6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-orange: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --accent-pink: #ec4899;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #059669;
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+  }
+
+  [data-theme="light"] {
+    --bg-primary: #f0f4f8;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f8fafc;
+    --bg-input: #f1f5f9;
+    --border: #e2e8f0;
+    --border-focus: #3b82f6;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(59,130,246,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(139,92,246,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(6,182,212,0.03) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 36px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-card);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-logo {
+    width: 52px; height: 52px;
+    background: var(--gradient-1);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 4px 16px rgba(102,126,234,0.3);
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .header-right { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); }
+  .btn-primary { background: var(--accent-blue); border-color: var(--accent-blue); }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-danger { border-color: var(--accent-red); color: var(--accent-red); }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: var(--radius-xs); }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .kpi-card:nth-child(1)::before { background: var(--gradient-1); }
+  .kpi-card:nth-child(2)::before { background: var(--gradient-2); }
+  .kpi-card:nth-child(3)::before { background: var(--gradient-3); }
+  .kpi-card:nth-child(4)::before { background: var(--gradient-4); }
+  .kpi-card:nth-child(5)::before { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+  .kpi-card:nth-child(6)::before { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+  .kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .kpi-value { font-size: 28px; font-weight: 800; margin: 6px 0 4px; letter-spacing: -1px; }
+  .kpi-sub { font-size: 12px; color: var(--text-secondary); }
+
+  /* Section */
+  .section { margin-bottom: 24px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+  /* Charts Grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-card);
+  }
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary); }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* Filters */
+  .filters-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    box-shadow: var(--shadow-card);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .filter-select, .filter-input {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: var(--radius-xs);
+    font-size: 13px;
+    font-family: inherit;
+    min-width: 160px;
+    transition: border-color 0.2s;
+  }
+  .filter-select:focus, .filter-input:focus { outline: none; border-color: var(--accent-blue); }
+  .filter-input[type="number"] { width: 120px; min-width: 100px; }
+
+  /* Period Pills */
+  .period-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1.5px solid var(--border); background: var(--bg-card);
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease;
+    white-space: nowrap; letter-spacing: 0.2px;
+  }
+  .period-pill:hover { border-color: var(--accent-blue); color: var(--text-primary); background: var(--bg-card-hover); }
+  .period-pill.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+  .period-pill .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+  /* Table */
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-header h3 { font-size: 15px; font-weight: 600; }
+  .table-info { font-size: 12px; color: var(--text-muted); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    padding: 12px 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  th:hover { color: var(--text-secondary); }
+  th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  th.sorted .sort-icon { opacity: 1; color: var(--accent-blue); }
+  td {
+    padding: 12px 18px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,54,84,0.4);
+    white-space: nowrap;
+  }
+  tr:hover td { background: rgba(59,130,246,0.04); }
+  .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .amount-positive { color: var(--accent-green); }
+  .amount-negative { color: var(--accent-red); }
+  .cat-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(59,130,246,0.12);
+    color: var(--accent-blue);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .page-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .page-btn:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+  .page-btn.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 90%;
+    max-width: 520px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.active .modal { transform: translateY(0); }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .form-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: var(--radius-xs);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent-blue); }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* Toast */
+  .toast-container { position: fixed; top: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s;
+    animation-fill-mode: forwards;
+  }
+  .toast-success { background: var(--accent-green); }
+  .toast-error { background: var(--accent-red); }
+  .toast-info { background: var(--accent-blue); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app { padding: 12px; }
+    .header { padding: 20px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .filters-bar { flex-direction: column; }
+    .kpi-value { font-size: 22px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* Tab bar */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; width: fit-content; }
+  .tab-btn {
+    padding: 8px 20px; border: none; border-radius: var(--radius-xs);
+    background: transparent; color: var(--text-muted);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent-blue); color: #fff; }
+  .tab-btn:hover:not(.active) { color: var(--text-primary); }
+
+  .hidden { display: none !important; }
+
+  /* Delete btn */
+  .del-btn {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 16px; padding: 4px 8px;
+    border-radius: var(--radius-xs); transition: all 0.2s;
+  }
+  .del-btn:hover { color: var(--accent-red); background: rgba(239,68,68,0.1); }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">🏦</div>
+      <div>
+        <h1>Garanti BBVA – Bonus Gold Dashboard</h1>
+        <div class="header-sub">Mehmet Şahin Çil •••• 6022 &nbsp;|&nbsp; Son Güncelleme: <span id="lastUpdate">-</span></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn" id="themeToggle" onclick="toggleTheme()" title="Tema Değiştir">🌙 Karanlık</button>
+      <button class="btn" onclick="downloadSelf()">⬇️ İndir</button>
+      <button class="btn" onclick="exportExcel()">📊 Excel İndir</button>
+      <button class="btn" onclick="importExcel()">📤 Excel Yükle</button>
+      <button class="btn btn-primary" onclick="openModal()">＋ İşlem Ekle</button>
+    </div>
+  </div>
+
+  <!-- Global Period Selector -->
+  <div id="globalPeriodBar" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Dönem</span>
+    <div id="globalPeriodPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('overview')">📊 Genel Bakış</button>
+    <button class="tab-btn" onclick="switchTab('transactions')">📋 İşlemler</button>
+    <button class="tab-btn" onclick="switchTab('cats')">🏷️ Kategori Analizi</button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div id="tab-overview">
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 Aylık Harcama Dağılımı</h3>
+        <div class="chart-wrap"><canvas id="chartMonthly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🏷️ Kategori Dağılımı (Tüm Dönem)</h3>
+        <div class="chart-wrap"><canvas id="chartCatPie"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📈 Günlük Harcama Trendi</h3>
+        <div class="chart-wrap"><canvas id="chartDaily"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🏢 En Çok Harcama Yapılan Yerler</h3>
+        <div class="chart-wrap"><canvas id="chartMerchants"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Tab -->
+  <div id="tab-transactions" class="hidden">
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group" style="flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap;align-self:center;">
+        <div id="periodPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <input type="hidden" id="fPeriod" value="">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Kategori</span>
+        <select class="filter-select" id="fCategory" onchange="applyFilters()">
+          <option value="">Tümü</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Arama</span>
+        <input class="filter-input" id="fSearch" placeholder="İşlem adı ara..." oninput="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Min Tutar</span>
+        <input class="filter-input" type="number" id="fMinAmount" placeholder="0" oninput="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Max Tutar</span>
+        <input class="filter-input" type="number" id="fMaxAmount" placeholder="∞" oninput="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Sıralama</span>
+        <select class="filter-select" id="fSort" onchange="applyFilters()">
+          <option value="date-desc">Tarih (Yeni → Eski)</option>
+          <option value="date-asc">Tarih (Eski → Yeni)</option>
+          <option value="amount-desc">Tutar (Azalan)</option>
+          <option value="amount-asc">Tutar (Artan)</option>
+          <option value="name-asc">İşlem (A-Z)</option>
+        </select>
+      </div>
+      <div class="filter-group" style="align-self:flex-end">
+        <button class="btn btn-sm" onclick="resetFilters()">🔄 Sıfırla</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3>İşlem Listesi</h3>
+        <span class="table-info" id="tableInfo">0 işlem</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih <span class="sort-icon">↕</span></th>
+              <th>İşlem <span class="sort-icon">↕</span></th>
+              <th>Kategori <span class="sort-icon">↕</span></th>
+              <th>Tutar (TL) <span class="sort-icon">↕</span></th>
+              <th>Bonus (TL) <span class="sort-icon">↕</span></th>
+              <th>Dönem <span class="sort-icon">↕</span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Category Analysis Tab -->
+  <div id="tab-cats" class="hidden">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 Ocak Dönemi Kategori Dağılımı</h3>
+        <div class="chart-wrap"><canvas id="chartCatOca"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📊 Şubat Dönemi Kategori Dağılımı</h3>
+        <div class="chart-wrap"><canvas id="chartCatFeb"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📊 Mart Dönemi Kategori Dağılımı</h3>
+        <div class="chart-wrap"><canvas id="chartCatMar"></canvas></div>
+      </div>
+      <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>📈 Dönemler Arası Kategori Karşılaştırması</h3>
+        <div class="chart-wrap" style="height:320px"><canvas id="chartCatCompare"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2>＋ Yeni İşlem Ekle</h2>
+    <div class="form-group">
+      <label>Tarih</label>
+      <input class="form-input" type="date" id="mDate">
+    </div>
+    <div class="form-group">
+      <label>İşlem Açıklaması</label>
+      <input class="form-input" type="text" id="mDesc" placeholder="ör: MİGROS EDREMİT">
+    </div>
+    <div class="form-group">
+      <label>Kategori</label>
+      <select class="form-input" id="mCat"></select>
+    </div>
+    <div class="form-group">
+      <label>Tutar (TL)</label>
+      <input class="form-input" type="number" step="0.01" id="mAmount" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label>Bonus (TL) – Opsiyonel</label>
+      <input class="form-input" type="number" step="0.01" id="mBonus" placeholder="0.00">
+    </div>
+    <div class="form-group">
+      <label>Dönem</label>
+      <input class="form-input" type="text" id="mPeriod" placeholder="ör: Mart 2026">
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveTransaction()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importOverlay" onclick="if(event.target===this)closeImport()">
+  <div class="modal" style="max-width:660px;width:95vw;">
+    <h2>📤 Yeni Ay Verisi Ekle</h2>
+
+    <!-- Step 1: File pick -->
+    <div id="importStep1">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6">
+        Ocak formatındaki <b>.xls / .xlsx</b> dosyasını seçin. Mevcut veriler korunur, yeni ay eklenir.<br>
+        <span style="color:var(--text-muted)">Gerekli sütunlar: Tarih · İşlem Açıklaması · Kategori · Tutar (TL) · Dönem</span>
+      </p>
+      <label id="dropZone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed var(--border);border-radius:var(--radius);padding:36px 20px;cursor:pointer;transition:border-color .2s;background:var(--bg-input);" onclick="document.getElementById('importFile').click()">
+        <span style="font-size:40px">📂</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text-primary)">Dosya seçmek için tıklayın</span>
+        <span style="font-size:12px;color:var(--text-muted)">.xls veya .xlsx</span>
+      </label>
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this)">
+      <div id="importFileInfo" style="display:none;margin-top:14px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text-secondary);">
+        📄 <span id="importFileName"></span>
+      </div>
+    </div>
+
+    <!-- Step 2: Preview -->
+    <div id="importStep2" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary)" id="importPreviewTitle">Önizleme</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="importPreviewSub"></div>
+        </div>
+        <span id="importPeriodBadge" style="padding:4px 14px;border-radius:20px;background:var(--accent-blue);color:#fff;font-size:12px;font-weight:700;"></span>
+      </div>
+      <div id="importStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;"></div>
+      <div id="importWarning" style="display:none;padding:10px 14px;border-radius:var(--radius-sm);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);font-size:12px;color:#f59e0b;margin-bottom:12px;"></div>
+      <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:var(--bg-secondary);position:sticky;top:0;">
+              <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Tarih</th>
+              <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Açıklama</th>
+              <th style="padding:8px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Kategori</th>
+              <th style="padding:8px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Tutar</th>
+            </tr>
+          </thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:6px;" id="importPreviewNote"></p>
+    </div>
+
+    <div class="form-actions" style="margin-top:20px;">
+      <button class="btn" onclick="closeImport()">İptal</button>
+      <button class="btn" id="importBackBtn" style="display:none;" onclick="importGoBack()">← Geri</button>
+      <button class="btn btn-primary" id="importActionBtn" onclick="doImport()" disabled style="opacity:.5;cursor:not-allowed;">İçe Aktar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ==================== DATA ====================
+const INITIAL_DATA = [
+  // === OCAK 2026 ===
+  {date:"2026-01-26",description:"MİGROS ONE İSTANBUL",category:"Market",amount:0.0,bonus:0.3,period:"Ocak 2026"},
+  {date:"2026-01-26",description:"MİGROS ONE İSTANBUL",category:"Market",amount:482.7,bonus:0.12,period:"Ocak 2026"},
+  {date:"2026-01-25",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:241.8,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-24",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:143.85,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-23",description:"MOBİL:KÖFTECİ HİLMİ BALIKESİR",category:"Yeme / İçme",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-23",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:200.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-23",description:"MOBİL:KAZIM ŞENGÖZ ŞARKÜT BALIKESİR",category:"Market",amount:406.43,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-23",description:"DYSON TURKEY ELEK. ÜR. Tİ(1/6) İSTANBUL",category:"Elektronik",amount:550.0,bonus:7.58,period:"Ocak 2026"},
+  {date:"2026-01-23",description:"S/CANAKKALE TRUVA TURIZM ÇANAKKALE",category:"Ulaşım",amount:841.5,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-21",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:900.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-21",description:"SIPAY ELEKTR/UNICO SIGORT(4/5) ISTANBUL",category:"Emeklilik/Sigorta",amount:115.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-21",description:"MOBİL:ADRAMIS GIDA INSAAT BALIKESIR",category:"Market",amount:1090.2,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-20",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:1179.5,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-20",description:"E/EDREMİT BELEDİYESİ BALIKESİR",category:"Vergi",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-20",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:106.3,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-20",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:188.5,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-20",description:"AJET HAVA TAŞIMACILIĞI(2/3) İSTANBUL",category:"Ulaşım",amount:320.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-19",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:800.69,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-18",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:85.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-18",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:85.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-17",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-17",description:"5M EDREMİT KİPA AVM5548 BALIKESİR",category:"Market",amount:180.0,bonus:1.02,period:"Ocak 2026"},
+  {date:"2026-01-16",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:270.7,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-16",description:"BİMEDREMIT BALIKESIR 384 BALIKESİR",category:"Market",amount:75.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-16",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:136.28,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-16",description:"ÖDEAL./SARIKIZ SOFRA BALIKESİR",category:"Yeme / İçme",amount:239.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-16",description:"MOBİL:ADRAMIS GIDA INSAAT BALIKESIR",category:"Market",amount:300.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-15",description:"FİLE MARKET İSTANBUL",category:"Market",amount:729.01,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-14",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:1776.03,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-14",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:182.95,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-14",description:"HEPSİPAYHEP*HEPSİBURADA İSTANBUL",category:"Market",amount:225.0,bonus:0.38,period:"Ocak 2026"},
+  {date:"2026-01-13",description:"SINAN DIKICI SAHIS FIRMAS BALIKESIR",category:"Market",amount:2491.97,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-13",description:"S/BASKİ SANAL POS BALIKESİR",category:"Kurum Ödemesi",amount:85.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-12",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:430.36,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-12",description:"ÖZKAN GSM BALIKESİR",category:"Telekomünikasyon",amount:150.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-12",description:"ŞİFA PAZARI BAHARAT ÇEŞİT BALIKESİR",category:"Market",amount:180.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-12",description:"TİRYAKİ BALIKESİR",category:"Market",amount:220.0,bonus:1.43,period:"Ocak 2026"},
+  {date:"2026-01-11",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:475.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-11",description:"PARAM/ /YEMEKSEPETI ISTANBUL",category:"Yeme / İçme",amount:170.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-10",description:"ÇARŞI FAST FOOD BALIKESİR",category:"Yeme / İçme",amount:1735.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-10",description:"EDREVET VETERİNER BALIKESİR",category:"Sağlık / Bakım",amount:285.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-09",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:6800.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-09",description:"ŞİFA PAZARI BAHARAT ÇEŞİT BALIKESİR",category:"Market",amount:30.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-09",description:"GULELI ECZANESI BALIKESIR",category:"Sağlık / Bakım",amount:130.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-09",description:"TİRYAKİ BALIKESİR",category:"Market",amount:189.71,bonus:0.74,period:"Ocak 2026"},
+  {date:"2026-01-08",description:"HEPSİPAYHEP*HEPSİBURADA İSTANBUL",category:"Market",amount:243.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-08",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:49.9,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-08",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-08",description:"MOBİL:HAKAN MANAV BALIKESİR",category:"Market",amount:288.93,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-07",description:"SINAN DIKICI SAHIS FIRMAS BALIKESIR",category:"Market",amount:370.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-07",description:"ADRAMIS GIDA INSAAT TURIZ BALIKESIR",category:"Market",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-06",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:1895.26,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-05",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:100.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-05",description:"MOBİL:3620 BALIKESİR YEDE BALIKESİR",category:"Market",amount:30.0,bonus:0.45,period:"Ocak 2026"},
+  {date:"2026-01-05",description:"POWERNET TELEKOMUNIKASY ISTANBUL",category:"Elektronik",amount:303.8,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-04",description:"HEPSİPAYHEP*HEPSİBURADA İSTANBUL",category:"Market",amount:470.0,bonus:9.59,period:"Ocak 2026"},
+  {date:"2026-01-04",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:0.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-04",description:"HEPSİPAYHEP*HEPSİBURADA İSTANBUL",category:"Market",amount:200.0,bonus:0.05,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"RAZ*TRUECALLER INTERNA Gurgaon",category:"Eğlence / Hobi",amount:297.39,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:7.49,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:39.95,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:100.25,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"WWW.ALIOSMANULUSOY.COM TRABZON",category:"Ulaşım",amount:115.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"HEPSİPAYHEP*HEPSİBURADA(1/3) İSTANBUL",category:"Market",amount:1250.0,bonus:0.59,period:"Ocak 2026"},
+  {date:"2026-01-03",description:"WWW.ALIOSMANULUSOY.COM TRABZON",category:"Ulaşım",amount:1499.68,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-02",description:"MOBİL:A1010560KOCASEYİT BALIKESİR",category:"Market",amount:5250.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-02",description:"BASKİ KADIKÖY VEZNE BALIKESİR",category:"Kurum Ödemesi",amount:36.8,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-01",description:"Cep Şube Ödeme ",category:"Kart Ödemesi",amount:355.0,bonus:0.0,period:"Ocak 2026"},
+  {date:"2026-01-01",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:58130.63,bonus:0.0,period:"Ocak 2026"},
+  {date:"2025-12-31",description:"GOOGLE *Spotify Music LONDON",category:"Eğlence / Hobi",amount:30.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-31",description:"MOBİL:A1010560KOCASEYİT BALIKESİR",category:"Market",amount:99.0,bonus:0.02,period:"Şubat 2026"},
+  {date:"2025-12-30",description:"MOBİL:BTSMM507EDREMİT G BALIKESİR",category:"Market",amount:165.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-30",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:169.19,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-29",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:247.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-29",description:"MOBİL:FİLE MARKET MAĞAZAC BALIKESİR",category:"Market",amount:180.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-29",description:"NETFLIX.COM Amsterdam",category:"Kurum Ödemesi",amount:272.4,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-28",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:379.99,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-28",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:30.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-26",description:"ÖDEAL./SARIKIZ SOFRA BALIKESİR",category:"Yeme / İçme",amount:30.0,bonus:0.0,period:"Şubat 2026"},
+  {date:"2025-12-25",description:"TRENDYOL.COM(2/3) İSTANBUL",category:"Market",amount:360.0,bonus:0.0,period:"Şubat 2026"},
+
+  // === SUBAT 2026 ===
+  {date:"2026-02-23",description:"DYSON TURKEY ELEK. ÜR. Tİ(2/6) İSTANBUL",category:"Elektronik",amount:841.5,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-22",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:192.5,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-21",description:"SIPAY ELEKTR/UNICO SIGORT(5/5) ISTANBUL",category:"Emeklilik/Sigorta",amount:1090.2,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-20",description:"MOBİL:BTSM-M507-EDREMİT G BALIKESİR",category:"Market",amount:360.13,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-20",description:"MOBİL:5M EDREMİT KİPA AVM BALIKESİR",category:"Market",amount:590.85,bonus:0.45,period:"Şubat 2026"},
+  {date:"2026-02-20",description:"AJET HAVA TAŞIMACILIĞI(3/3) İSTANBUL",category:"Ulaşım",amount:800.69,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-20",description:"ÖDEAL//BAŞLAR TEKNİK BALIKESİR",category:"Kişisel Hizmet",amount:1300,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-19",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:412.9,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-19",description:"MOBİL:HAKAN MANAV BALIKESİR",category:"Market",amount:660,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-18",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:45,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-18",description:"MOKA UNITED/YEMEKSEPETI ISTANBUL",category:"Yeme / İçme",amount:720,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-17",description:"LİDİO /ASIS ISTANBUL",category:"Diğer",amount:314.99,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-17",description:"NEXASERVER.COM LONDON",category:"Elektronik",amount:1250,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-16",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:50,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-15",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:350.85,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-14",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:274.95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-14",description:"MOBİL:A101-9923-D329 BATT BALIKESİR",category:"Market",amount:410,bonus:0.06,period:"Şubat 2026"},
+  {date:"2026-02-14",description:"MOBİL:BTSM-M507-EDREMİT G BALIKESİR",category:"Market",amount:499,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-14",description:"MOBİL:5M EDREMİT KİPA AVM BALIKESİR",category:"Market",amount:1246.09,bonus:0.93,period:"Şubat 2026"},
+  {date:"2026-02-13",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:509.95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-13",description:"BD/ÇINAR VETERİNER KLİNİĞ BALIKESİR",category:"Sağlık / Bakım",amount:4300,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-12",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:100,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-12",description:"MOBİL:ADRAMIS GIDA INSAAT BALIKESIR",category:"Market",amount:1052.32,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-11",description:"A101-6332 DARSOFA-EDREMİT BALIKESİR",category:"Market",amount:55.5,bonus:0.02,period:"Şubat 2026"},
+  {date:"2026-02-11",description:"SINAN DIKICI SAHIS FIRMAS BALIKESIR",category:"Market",amount:520.5,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-11",description:"MOBİL:HAKAN MANAV BALIKESİR",category:"Market",amount:915,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-11",description:"NKOLAY/DİRK ROSSMANN İSTANBUL",category:"Diğer",amount:1006,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-11",description:"A101-6332 DARSOFA-EDREMİT BALIKESİR",category:"Market",amount:1170,bonus:0.18,period:"Şubat 2026"},
+  {date:"2026-02-10",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-10",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:182.45,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-09",description:"ÖZKAN GSM BALIKESİR",category:"Telekomünikasyon",amount:180,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-09",description:"ÇARŞI FAST FOOD BALIKESİR",category:"Yeme / İçme",amount:290,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-08",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:147.9,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-08",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:148.5,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-07",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:39.95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-07",description:"HEPSİPAY-HEP*HEPSİBURADA İSTANBUL",category:"Market",amount:360,bonus:0.06,period:"Şubat 2026"},
+  {date:"2026-02-06",description:"5M EDREMİT KİPA AVM-5548 BALIKESİR",category:"Market",amount:130.9,bonus:0.11,period:"Şubat 2026"},
+  {date:"2026-02-06",description:"BTSM-M507-EDREMİT GROSS BALIKESİR",category:"Market",amount:359.8,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-05",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:67.97,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-05",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:406.8,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-05",description:"SINAN DIKICI SAHIS FIRMAS BALIKESIR",category:"Market",amount:955.65,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-04",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:100,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-04",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:196.4,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"RAZ*TRUECALLER INTERNA Gurgaon",category:"Eğlence / Hobi",amount:7.49,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"MOBİL:6106 BALIKESİR EDRE BALIKESİR",category:"Market",amount:77.5,bonus:0.02,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:79,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"7 24 ÇORBACI HASAN U BALIKESİR",category:"Yeme / İçme",amount:180,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"MOBİL:BİM K432-KAZDAĞI - BALIKESİR",category:"Market",amount:217,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"RAMİZ MANAV BALIKESİR",category:"Market",amount:250,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:256,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"AYŞİM ET VE PİLİÇ BALIKESİR",category:"Market",amount:300,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"POWERNET TELEKOMUNIKASY ISTANBUL",category:"Elektronik",amount:670,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-03",description:"HEPSİPAY-HEP*HEPSİBURADA(2/3) İSTANBUL",category:"Market",amount:1499.66,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-02",description:"BALIKESİR SU KANALİZ BALIKESİR",category:"Faturalar",amount:360,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-02",description:"MOBİL:ADRAMIS GIDA INSAAT BALIKESIR",category:"Market",amount:1942.44,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-01",description:"MOBİL:SINAN MARKET BALIKESIR",category:"Market",amount:207.85,bonus:0,period:"Şubat 2026"},
+  {date:"2026-02-01",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:249.95,bonus:0,period:"Şubat 2026"},
+  // Ocak sonu (Subat ekstresinde)
+  {date:"2026-01-30",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:30,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-30",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:56.95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-29",description:"SINAN DIKICI SAHIS FIRMAS BALIKESIR",category:"Market",amount:257.95,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-29",description:"NETFLIX.COM Amsterdam",category:"Dijital Abonelik",amount:379.99,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-28",description:"PARATİ /PETLEBİ.COM BURSA",category:"Kişisel Hizmet",amount:980,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-28",description:"BALIKESİR GÜÇLÜ ELEKTRİK BALIKESİR",category:"Elektronik",amount:6300,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-27",description:"HEPSİPAY-HEP*HEPSİBURADA İSTANBUL",category:"Market",amount:215.5,bonus:0.03,period:"Şubat 2026"},
+  {date:"2026-01-27",description:"A101-9923-D329 BATTAL GAZ BALIKESİR",category:"Market",amount:358.43,bonus:0.06,period:"Şubat 2026"},
+  {date:"2026-01-27",description:"5M EDREMİT KİPA AVM-5548 BALIKESİR",category:"Market",amount:652.48,bonus:0.5,period:"Şubat 2026"},
+  {date:"2026-01-27",description:"HEPSİPAY-HEP*HEPSİBURADA İSTANBUL",category:"Market",amount:5388.03,bonus:0.71,period:"Şubat 2026"},
+  {date:"2026-01-26",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:113.85,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-26",description:"MOBİL:SINAN DIKICI SAHIS BALIKESIR",category:"Market",amount:339.15,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-26",description:"S/BASKİ SANAL POS BALIKESİR",category:"Faturalar",amount:431,bonus:0,period:"Şubat 2026"},
+  {date:"2026-01-25",description:"TRENDYOL.COM(3/3) İSTANBUL",category:"Market",amount:304.16,bonus:0,period:"Şubat 2026"},
+
+  // === MART 2026 ===
+  {date:"2026-02-25",description:"İKİZLERYEM EVCİL HAYVAN",category:"Evcil Hayvan",amount:5299,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"EDREVET VETERİNER HEKİM",category:"Evcil Hayvan",amount:800,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"BASKİ",category:"Faturalar",amount:435,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"MADRALI KASAP",category:"Market/Gıda",amount:500,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"ADRAMIS GIDA INS. TURİZ.",category:"Market/Gıda",amount:2293.1,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-26",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-27",description:"HEPSİPAY-HEPSİBURADA",category:"E-ticaret",amount:496.13,bonus:0.05,period:"Mart 2026"},
+  {date:"2026-02-27",description:"FİLE MARKET",category:"Market/Gıda",amount:1329.1,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-27",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:120,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-27",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:115,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-28",description:"Google Spotify Music",category:"Dijital Abonelik",amount:99,bonus:0,period:"Mart 2026"},
+  {date:"2026-02-28",description:"NETFLIX.COM",category:"Dijital Abonelik",amount:379.99,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-02",description:"BASKİ GENEL MÜDÜRLÜĞÜ",category:"Faturalar",amount:424,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-02",description:"MİGROS-EDREMİT",category:"Market/Gıda",amount:600.9,bonus:0.3,period:"Mart 2026"},
+  {date:"2026-03-02",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:68.5,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-03",description:"HEPSİPAY-HEPSİBURADA (3T)",category:"E-ticaret",amount:1499.66,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-03",description:"POWERNET TELEKOMÜNİKASYON",category:"Elektronik",amount:670,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-03",description:"RAZ*TRUECALLER INTERNA",category:"Dijital Abonelik",amount:7.49,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-04",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:87.9,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-04",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:224.95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-07",description:"VATAN BİLGİSAYAR (3T)",category:"Elektronik",amount:21282.68,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-07",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:120,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-07",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:80,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-08",description:"PAMUKKALE TURİZM",category:"Seyahat",amount:3010,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-08",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-08",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:668.3,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-09",description:"TOPLU TAŞIMA ÜCRETİ",category:"Ulaşım",amount:28,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-10",description:"HEPSİPAY-HEPSİBURADA",category:"E-ticaret",amount:2659.44,bonus:0.36,period:"Mart 2026"},
+  {date:"2026-03-10",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-10",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:46.95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-11",description:"BTSM-M507-EDREMİT GROSS",category:"Market/Gıda",amount:329.5,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-11",description:"5M EDREMİT KİPA AVM",category:"Market/Gıda",amount:169.9,bonus:0.12,period:"Mart 2026"},
+  {date:"2026-03-11",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-12",description:"A101 DARSO",category:"Market/Gıda",amount:1675.47,bonus:0.26,period:"Mart 2026"},
+  {date:"2026-03-12",description:"5M EDREMİT KİPA AVM",category:"Market/Gıda",amount:354.4,bonus:0.27,period:"Mart 2026"},
+  {date:"2026-03-12",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:344.9,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-12",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-13",description:"5M EDREMİT KİPA AVM",category:"Market/Gıda",amount:195.9,bonus:0.15,period:"Mart 2026"},
+  {date:"2026-03-13",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:128.85,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-15",description:"HEPSİPAY-HEPSİBURADA",category:"E-ticaret",amount:821.85,bonus:0.12,period:"Mart 2026"},
+  {date:"2026-03-15",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-15",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:50,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-16",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:220,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-17",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:362.5,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-18",description:"HAKAN MANAV",category:"Market/Gıda",amount:515,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-19",description:"MİGROS-EDREMİT",category:"Market/Gıda",amount:421.75,bonus:0.32,period:"Mart 2026"},
+  {date:"2026-03-19",description:"FİLE MARKET MAĞAZACILIK",category:"Market/Gıda",amount:89.9,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-19",description:"HAKAN MANAV",category:"Market/Gıda",amount:85,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-19",description:"SİNAN MARKET",category:"Market/Gıda",amount:284.95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-22",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:165,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-22",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:78.95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-23",description:"A101-6332 DARSOFA",category:"Market/Gıda",amount:569,bonus:0.09,period:"Mart 2026"},
+  {date:"2026-03-23",description:"DYSON TURKEY (6T)",category:"E-ticaret",amount:841.5,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-24",description:"SİNAN DİKİCİ ŞHS FRM.",category:"Market/Gıda",amount:199.95,bonus:0,period:"Mart 2026"},
+  {date:"2026-03-24",description:"A101-6332 DARSOFA",category:"Market/Gıda",amount:1036,bonus:0.15,period:"Mart 2026"},
+];
+
+// ==================== STORAGE ====================
+const STORAGE_KEY = 'garanti_dashboard_data';
+
+function loadData() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) {}
+  }
+  return [...INITIAL_DATA];
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function resetToInitial() {
+  localStorage.removeItem(STORAGE_KEY);
+  transactions = [...INITIAL_DATA];
+  refreshAll();
+  showToast('Veriler sıfırlandı', 'info');
+}
+
+let transactions = loadData();
+let filteredTx = [...transactions];
+let currentPage = 1;
+const PAGE_SIZE = 20;
+let globalPeriod = ''; // '' = all periods
+
+// Aktif veri seti (filtreli veya tümü)
+function activeData() { return filteredTx; }
+
+function setGlobalPeriod(period) {
+  globalPeriod = period;
+  // Update global pills UI
+  document.querySelectorAll('#globalPeriodPills .period-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.period === period);
+  });
+  // Sync transaction tab period pill
+  document.querySelectorAll('#periodPills .period-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.period === period);
+  });
+  document.getElementById('fPeriod').value = period;
+  applyFiltersInternal();
+}
+
+function applyFiltersInternal() {
+  const period = document.getElementById('fPeriod').value;
+  const category = document.getElementById('fCategory').value;
+  const search = document.getElementById('fSearch').value.toLowerCase();
+  const minAmt = parseFloat(document.getElementById('fMinAmount').value) || 0;
+  const maxAmt = parseFloat(document.getElementById('fMaxAmount').value) || Infinity;
+  const sort = document.getElementById('fSort').value;
+
+  filteredTx = transactions.filter(t => {
+    if (period && t.period !== period) return false;
+    if (category && t.category !== category) return false;
+    if (search && !t.description.toLowerCase().includes(search)) return false;
+    if (t.amount < minAmt || t.amount > maxAmt) return false;
+    return true;
+  });
+
+  const [sortKey, sortDir] = sort.split('-');
+  filteredTx.sort((a,b) => {
+    let va, vb;
+    if (sortKey === 'date') { va = a.date; vb = b.date; }
+    else if (sortKey === 'amount') { va = a.amount; vb = b.amount; }
+    else { va = a.description; vb = b.description; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  currentPage = 1;
+  renderTable();
+  buildKPI();
+  buildCharts();
+}
+
+// ==================== CATEGORY COLORS ====================
+const CAT_COLORS = {
+  'Market': '#3b82f6',
+  'Market/Gıda': '#3b82f6',
+  'Elektronik': '#8b5cf6',
+  'Evcil Hayvan': '#f59e0b',
+  'E-ticaret': '#06b6d4',
+  'Faturalar': '#64748b',
+  'Dijital Abonelik': '#ec4899',
+  'Seyahat': '#10b981',
+  'Ulaşım': '#14b8a6',
+  'Sağlık / Bakım': '#ef4444',
+  'Kişisel Hizmet': '#f97316',
+  'Diğer': '#6b7280',
+  'Yeme / İçme': '#a855f7',
+  'Emeklilik/Sigorta': '#0ea5e9',
+  'Telekomünikasyon': '#84cc16',
+  'Eğlence / Hobi': '#f43f5e',
+  'Kart Ödemesi': '#22c55e',
+  'Faturalar': '#78716c',
+};
+
+function getCatColor(cat) {
+  return CAT_COLORS[cat] || '#' + Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6,'0');
+}
+
+// ==================== CHARTS ====================
+let charts = {};
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+}
+
+function fmt(n) { return n.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtShort(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toFixed(0);
+}
+
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(42,54,84,0.5)';
+Chart.defaults.font.family = 'Inter';
+
+function buildCharts() {
+  destroyCharts();
+  const data = activeData();
+
+  // 1. Monthly bar chart
+  const monthTotals = {};
+  data.forEach(t => {
+    if (!t.period) return;
+    monthTotals[t.period] = (monthTotals[t.period] || 0) + t.amount;
+  });
+  const monthLabels = Object.keys(monthTotals);
+  const monthValues = Object.values(monthTotals);
+
+  charts.monthly = new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Toplam Harcama',
+        data: monthValues,
+        backgroundColor: ['rgba(59,130,246,0.7)', 'rgba(139,92,246,0.7)', 'rgba(6,182,212,0.7)'],
+        borderColor: ['#3b82f6','#8b5cf6','#06b6d4'],
+        borderWidth: 2,
+        borderRadius: 8,
+        barPercentage: 0.6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end', align: 'top', color: '#f1f5f9', font: { weight: 700, size: 13 },
+          formatter: v => fmt(v) + ' TL'
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(42,54,84,0.3)' }, ticks: { callback: v => fmtShort(v) } },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  // 2. Category pie
+  const catTotals = {};
+  data.forEach(t => {
+    const cat = t.category || 'Diğer';
+    catTotals[cat] = (catTotals[cat] || 0) + t.amount;
+  });
+  const catEntries = Object.entries(catTotals).sort((a,b) => b[1]-a[1]);
+  
+  charts.catPie = new Chart(document.getElementById('chartCatPie'), {
+    type: 'doughnut',
+    data: {
+      labels: catEntries.map(e => e[0]),
+      datasets: [{
+        data: catEntries.map(e => e[1]),
+        backgroundColor: catEntries.map(e => getCatColor(e[0])),
+        borderWidth: 0,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyleWidth: 10, font: { size: 11 } } },
+        datalabels: { display: false }
+      }
+    }
+  });
+
+  // 3. Daily trend
+  const dayTotals = {};
+  data.forEach(t => {
+    if (t.date) dayTotals[t.date] = (dayTotals[t.date] || 0) + t.amount;
+  });
+  const daySorted = Object.entries(dayTotals).sort((a,b) => a[0].localeCompare(b[0]));
+  
+  charts.daily = new Chart(document.getElementById('chartDaily'), {
+    type: 'line',
+    data: {
+      labels: daySorted.map(e => {
+        const d = new Date(e[0]);
+        return d.toLocaleDateString('tr-TR', {day:'numeric', month:'short'});
+      }),
+      datasets: [{
+        label: 'Günlük Harcama',
+        data: daySorted.map(e => e[1]),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, datalabels: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(42,54,84,0.3)' }, ticks: { callback: v => fmtShort(v) } },
+        x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
+      }
+    }
+  });
+
+  // 4. Top merchants
+  const merchTotals = {};
+  data.forEach(t => {
+    const m = t.description.split(' ')[0] || t.description.substring(0,20);
+    merchTotals[m] = (merchTotals[m] || 0) + t.amount;
+  });
+  const merchTop = Object.entries(merchTotals).sort((a,b) => b[1]-a[1]).slice(0,10);
+
+  charts.merchants = new Chart(document.getElementById('chartMerchants'), {
+    type: 'bar',
+    data: {
+      labels: merchTop.map(e => e[0]),
+      datasets: [{
+        data: merchTop.map(e => e[1]),
+        backgroundColor: merchTop.map((_,i) => {
+          const colors = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316','#84cc16'];
+          return colors[i % colors.length] + 'cc';
+        }),
+        borderRadius: 6,
+        barPercentage: 0.7,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end', align: 'right', color: '#94a3b8', font: { size: 10 },
+          formatter: v => fmt(v)
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(42,54,84,0.3)' }, ticks: { callback: v => fmtShort(v) } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  // Category tab charts
+  buildCatTabCharts();
+}
+
+function buildCatTabCharts() {
+  if (charts.catOca) charts.catOca.destroy();
+  if (charts.catFeb) charts.catFeb.destroy();
+  if (charts.catMar) charts.catMar.destroy();
+  if (charts.catCompare) charts.catCompare.destroy();
+
+  const data = activeData();
+  const ocaCats = {}, febCats = {}, marCats = {};
+  data.forEach(t => {
+    if (t.period === 'Ocak 2026') ocaCats[t.category] = (ocaCats[t.category]||0) + t.amount;
+    if (t.period === 'Şubat 2026') febCats[t.category] = (febCats[t.category]||0) + t.amount;
+    if (t.period === 'Mart 2026') marCats[t.category] = (marCats[t.category]||0) + t.amount;
+  });
+
+  const ocaEntries = Object.entries(ocaCats).sort((a,b) => b[1]-a[1]);
+  const febEntries = Object.entries(febCats).sort((a,b) => b[1]-a[1]);
+  const marEntries = Object.entries(marCats).sort((a,b) => b[1]-a[1]);
+
+  charts.catOca = new Chart(document.getElementById('chartCatOca'), {
+    type: 'doughnut',
+    data: {
+      labels: ocaEntries.map(e => e[0]),
+      datasets: [{ data: ocaEntries.map(e => e[1]), backgroundColor: ocaEntries.map(e => getCatColor(e[0])), borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'right', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } }, datalabels: { display: false } } }
+  });
+
+  charts.catFeb = new Chart(document.getElementById('chartCatFeb'), {
+    type: 'doughnut',
+    data: {
+      labels: febEntries.map(e => e[0]),
+      datasets: [{ data: febEntries.map(e => e[1]), backgroundColor: febEntries.map(e => getCatColor(e[0])), borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'right', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } }, datalabels: { display: false } } }
+  });
+
+  charts.catMar = new Chart(document.getElementById('chartCatMar'), {
+    type: 'doughnut',
+    data: {
+      labels: marEntries.map(e => e[0]),
+      datasets: [{ data: marEntries.map(e => e[1]), backgroundColor: marEntries.map(e => getCatColor(e[0])), borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'right', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } }, datalabels: { display: false } } }
+  });
+
+  // Comparison bar
+  const allCats = [...new Set([...Object.keys(ocaCats), ...Object.keys(febCats), ...Object.keys(marCats)])].sort();
+  charts.catCompare = new Chart(document.getElementById('chartCatCompare'), {
+    type: 'bar',
+    data: {
+      labels: allCats,
+      datasets: [
+        { label: 'Ocak 2026', data: allCats.map(c => ocaCats[c]||0), backgroundColor: 'rgba(16,185,129,0.7)', borderColor: '#10b981', borderWidth: 1, borderRadius: 6 },
+        { label: 'Şubat 2026', data: allCats.map(c => febCats[c]||0), backgroundColor: 'rgba(59,130,246,0.7)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 6 },
+        { label: 'Mart 2026', data: allCats.map(c => marCats[c]||0), backgroundColor: 'rgba(139,92,246,0.7)', borderColor: '#8b5cf6', borderWidth: 1, borderRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { usePointStyle: true, padding: 16 } },
+        datalabels: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(42,54,84,0.3)' }, ticks: { callback: v => fmtShort(v) } },
+        x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ==================== KPI ====================
+function buildKPI() {
+  const data = activeData();
+  const total = data.reduce((s,t) => s + t.amount, 0);
+  const totalBonus = data.reduce((s,t) => s + (t.bonus||0), 0);
+  const txCount = data.length;
+  const periods = [...new Set(data.map(t => t.period))].filter(Boolean);
+  const cats = [...new Set(data.map(t => t.category))].filter(Boolean);
+
+  // Top category
+  const catTotals = {};
+  data.forEach(t => { if(t.category) catTotals[t.category] = (catTotals[t.category]||0) + t.amount; });
+  const topCat = Object.entries(catTotals).sort((a,b) => b[1]-a[1])[0];
+
+  // Avg per transaction
+  const avg = txCount > 0 ? total / txCount : 0;
+
+  const isFiltered = data.length < transactions.length;
+  const filterBadge = isFiltered ? ' <span style="font-size:10px;background:var(--accent-blue);color:#fff;padding:2px 8px;border-radius:10px;margin-left:4px">Filtreli</span>' : '';
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Toplam Harcama${filterBadge}</div>
+      <div class="kpi-value">₺${fmt(total)}</div>
+      <div class="kpi-sub">${txCount} işlem / ${periods.length} dönem</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Ortalama İşlem</div>
+      <div class="kpi-value">₺${fmt(avg)}</div>
+      <div class="kpi-sub">İşlem başına</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Kazanılan Bonus</div>
+      <div class="kpi-value">₺${fmt(totalBonus)}</div>
+      <div class="kpi-sub">${periods.length} dönemde</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Kategori Sayısı</div>
+      <div class="kpi-value">${cats.length}</div>
+      <div class="kpi-sub">Farklı harcama kategorisi</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">En Çok Harcanan</div>
+      <div class="kpi-value" style="font-size:20px">${topCat ? topCat[0] : '-'}</div>
+      <div class="kpi-sub">${topCat ? '₺' + fmt(topCat[1]) : ''}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Aktif Dönem</div>
+      <div class="kpi-value" style="font-size:${globalPeriod ? '18px' : '20px'}">${globalPeriod || 'Tüm Dönemler'}</div>
+      <div class="kpi-sub">${[...new Set(data.map(t=>t.date))].length} farklı gün</div>
+    </div>
+  `;
+}
+
+// ==================== TABLE ====================
+function applyFilters() {
+  // sync hidden field from globalPeriod if not overriding
+  if (document.getElementById('fPeriod').value === '' && globalPeriod !== '') {
+    document.getElementById('fPeriod').value = globalPeriod;
+  }
+  const period = document.getElementById('fPeriod').value;
+  const category = document.getElementById('fCategory').value;
+  const search = document.getElementById('fSearch').value.toLowerCase();
+  const minAmt = parseFloat(document.getElementById('fMinAmount').value) || 0;
+  const maxAmt = parseFloat(document.getElementById('fMaxAmount').value) || Infinity;
+  const sort = document.getElementById('fSort').value;
+
+  filteredTx = transactions.filter(t => {
+    if (period && t.period !== period) return false;
+    if (category && t.category !== category) return false;
+    if (search && !t.description.toLowerCase().includes(search)) return false;
+    if (t.amount < minAmt || t.amount > maxAmt) return false;
+    return true;
+  });
+
+  // Sort
+  const [sortKey, sortDir] = sort.split('-');
+  filteredTx.sort((a,b) => {
+    let va, vb;
+    if (sortKey === 'date') { va = a.date; vb = b.date; }
+    else if (sortKey === 'amount') { va = a.amount; vb = b.amount; }
+    else { va = a.description; vb = b.description; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  currentPage = 1;
+  renderTable();
+  buildKPI();
+  buildCharts();
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredTx.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(filteredTx.length / PAGE_SIZE);
+
+  document.getElementById('tableInfo').textContent = `${filteredTx.length} işlem (toplam ${transactions.length})`;
+
+  const tbody = document.getElementById('tableBody');
+  if (pageData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">📭</div>Seçilen filtrelere uygun işlem bulunamadı.</td></tr>';
+  } else {
+    tbody.innerHTML = pageData.map((t, i) => `
+      <tr>
+        <td>${t.date ? new Date(t.date).toLocaleDateString('tr-TR', {day:'numeric',month:'short',year:'numeric'}) : '-'}</td>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">${t.description}</td>
+        <td><span class="cat-badge" style="background:${getCatColor(t.category)}22;color:${getCatColor(t.category)}">${t.category}</span></td>
+        <td class="amount ${t.amount >= 0 ? 'amount-positive' : 'amount-negative'}">${fmt(t.amount)} ₺</td>
+        <td style="color:var(--accent-green)">${t.bonus ? fmt(t.bonus) : '-'}</td>
+        <td style="color:var(--text-muted);font-size:12px">${t.period || '-'}</td>
+        <td><button class="del-btn" onclick="deleteTx(${transactions.indexOf(t)})" title="Sil">🗑</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // Pagination
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Önceki</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2) {
+      html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    } else if (Math.abs(p - currentPage) === 3) {
+      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Sonraki ›</button>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredTx.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderTable();
+}
+
+function resetFilters() {
+  globalPeriod = '';
+  document.getElementById('fPeriod').value = '';
+  document.getElementById('fCategory').value = '';
+  document.getElementById('fSearch').value = '';
+  document.getElementById('fMinAmount').value = '';
+  document.getElementById('fMaxAmount').value = '';
+  document.getElementById('fSort').value = 'date-desc';
+  applyFilters();
+}
+
+function deleteTx(idx) {
+  if (!confirm('Bu işlemi silmek istediğinize emin misiniz?')) return;
+  transactions.splice(idx, 1);
+  saveData(transactions);
+  refreshAll();
+  showToast('İşlem silindi', 'info');
+}
+
+// ==================== FILTER OPTIONS ====================
+function buildFilterOptions() {
+  const periods = [...new Set(transactions.map(t => t.period))].filter(Boolean).sort((a,b) => {
+    const monthOrder = {'Ocak':1,'Şubat':2,'Mart':3,'Nisan':4,'Mayıs':5,'Haziran':6,'Temmuz':7,'Ağustos':8,'Eylül':9,'Ekim':10,'Kasım':11,'Aralık':12};
+    const [ma, ya] = a.split(' '); const [mb, yb] = b.split(' ');
+    return (parseInt(ya)||0) - (parseInt(yb)||0) || (monthOrder[ma]||0) - (monthOrder[mb]||0);
+  });
+  const cats = [...new Set(transactions.map(t => t.category))].filter(Boolean).sort();
+
+  // Render global period pills
+  const pillColors = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899'];
+  const renderPills = (containerId) => {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.innerHTML = `<button class="period-pill ${globalPeriod===''?'active':''}" data-period="" onclick="setGlobalPeriod('')"><span class="pill-dot"></span>Tümü</button>` +
+      periods.map((p,i) => {
+        const [mon] = p.split(' ');
+        return `<button class="period-pill ${globalPeriod===p?'active':''}" data-period="${p}" onclick="setGlobalPeriod('${p}')" style="${globalPeriod===p?'':''}"><span class="pill-dot"></span>${p}</button>`;
+      }).join('');
+  };
+  renderPills('globalPeriodPills');
+  renderPills('periodPills');
+
+  // Keep hidden fPeriod in sync
+  document.getElementById('fPeriod').value = globalPeriod;
+
+  const fp = document.getElementById('fPeriod');
+
+  const fc = document.getElementById('fCategory');
+  fc.innerHTML = '<option value="">Tümü</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const mc = document.getElementById('mCat');
+  mc.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('') +
+    '<option value="__new">+ Yeni Kategori</option>';
+}
+
+// ==================== MODAL ====================
+function openModal() {
+  document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mDesc').value = '';
+  document.getElementById('mAmount').value = '';
+  document.getElementById('mBonus').value = '';
+  document.getElementById('mPeriod').value = '';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function saveTransaction() {
+  const date = document.getElementById('mDate').value;
+  const desc = document.getElementById('mDesc').value.trim();
+  let cat = document.getElementById('mCat').value;
+  const amount = parseFloat(document.getElementById('mAmount').value);
+  const bonus = parseFloat(document.getElementById('mBonus').value) || 0;
+  const period = document.getElementById('mPeriod').value.trim();
+
+  if (!date || !desc || !amount) {
+    showToast('Tarih, açıklama ve tutar zorunlu!', 'error');
+    return;
+  }
+
+  if (cat === '__new') {
+    cat = prompt('Yeni kategori adı:');
+    if (!cat) return;
+  }
+
+  transactions.push({ date, description: desc, category: cat, amount, bonus, period });
+  saveData(transactions);
+  closeModal();
+  refreshAll();
+  showToast('İşlem eklendi!', 'success');
+}
+
+// ==================== TAB SWITCH ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
+  document.getElementById('tab-transactions').classList.toggle('hidden', tab !== 'transactions');
+  document.getElementById('tab-cats').classList.toggle('hidden', tab !== 'cats');
+  if (tab === 'overview') buildCharts();
+  if (tab === 'cats') buildCatTabCharts();
+}
+
+// ==================== DOWNLOAD SELF ====================
+function downloadSelf() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'garanti-bbva-dashboard.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Dashboard indirildi! 📁', 'success');
+}
+
+// ==================== EXPORT / IMPORT (EXCEL + JSON) ====================
+function exportExcel() {
+  // Ana işlemler sayfası
+  const wsData = [['Tarih','İşlem Açıklaması','Kategori','Tutar (TL)','Bonus (TL)','Dönem']];
+  transactions.forEach(t => {
+    wsData.push([t.date, t.description, t.category, t.amount, t.bonus || 0, t.period || '']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Sütun genişlikleri
+  ws['!cols'] = [{wch:12},{wch:45},{wch:20},{wch:15},{wch:12},{wch:15}];
+
+  // Kategori özet sayfası
+  const catTotals = {};
+  transactions.forEach(t => {
+    const key = (t.period||'Genel') + '|' + (t.category||'Diğer');
+    catTotals[key] = (catTotals[key]||0) + t.amount;
+  });
+  const catData = [['Dönem','Kategori','Toplam Tutar (TL)','İşlem Sayısı']];
+  const grouped = {};
+  Object.entries(catTotals).forEach(([k,v]) => {
+    const [period,cat] = k.split('|');
+    if (!grouped[period]) grouped[period] = {};
+    grouped[period][cat] = v;
+  });
+  Object.entries(grouped).forEach(([period,cats]) => {
+    Object.entries(cats).forEach(([cat,total]) => {
+      const count = transactions.filter(t => (t.period||'Genel')===period && (t.category||'Diğer')===cat).length;
+      catData.push([period, cat, total, count]);
+    });
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(catData);
+  ws2['!cols'] = [{wch:15},{wch:25},{wch:18},{wch:12}];
+
+  // KPI özet sayfası
+  const total = transactions.reduce((s,t) => s+t.amount, 0);
+  const totalBonus = transactions.reduce((s,t) => s+(t.bonus||0), 0);
+  const kpiData = [
+    ['Garanti BBVA – Bonus Gold Dashboard Özet'],
+    [],
+    ['Toplam Harcama (TL)', total],
+    ['Toplam Bonus (TL)', totalBonus],
+    ['İşlem Sayısı', transactions.length],
+    ['Kategori Sayısı', [...new Set(transactions.map(t=>t.category))].length],
+    ['Dönemler', [...new Set(transactions.map(t=>t.period))].filter(Boolean).join(', ')],
+    [],
+    ['Rapor Tarihi', new Date().toLocaleString('tr-TR')],
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(kpiData);
+  ws3['!cols'] = [{wch:25},{wch:30}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws3, 'Özet');
+  XLSX.utils.book_append_sheet(wb, ws, 'Tüm İşlemler');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Kategori Analizi');
+
+  XLSX.writeFile(wb, `garanti-dashboard-${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('Excel dosyası indirildi! 📊', 'success');
+}
+
+let importParsedData = [];
+
+function importExcel() {
+  importParsedData = [];
+  document.getElementById('importFile').value = '';
+  document.getElementById('importStep1').style.display = '';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importFileInfo').style.display = 'none';
+  document.getElementById('importBackBtn').style.display = 'none';
+  document.getElementById('importActionBtn').textContent = 'İçe Aktar';
+  document.getElementById('importActionBtn').disabled = true;
+  document.getElementById('importOverlay').classList.add('active');
+}
+
+function closeImport() {
+  document.getElementById('importOverlay').classList.remove('active');
+}
+
+function importGoBack() {
+  importParsedData = [];
+  document.getElementById('importFile').value = '';
+  document.getElementById('importStep1').style.display = '';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importFileInfo').style.display = 'none';
+  document.getElementById('importBackBtn').style.display = 'none';
+  document.getElementById('importActionBtn').textContent = 'İçe Aktar';
+  document.getElementById('importActionBtn').disabled = true;
+}
+
+function handleImportFile(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  document.getElementById('importFileName').textContent = file.name;
+  document.getElementById('importFileInfo').style.display = '';
+  document.getElementById('importActionBtn').disabled = true;
+  document.getElementById('importActionBtn').textContent = 'Okunuyor...';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      let sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // Find header row
+      let headerIdx = -1;
+      for (let i = 0; i < Math.min(rows.length, 10); i++) {
+        const row = rows[i].map(c => String(c||'').toLowerCase());
+        if (row.some(c => c.includes('tarih')) && row.some(c => c.includes('tutar'))) {
+          headerIdx = i; break;
+        }
+      }
+      if (headerIdx === -1) { showToast('Başlık satırı bulunamadı (Tarih + Tutar gerekli)', 'error'); return; }
+
+      const headers = rows[headerIdx].map(h => String(h||'').toLowerCase().trim());
+      const dateIdx   = headers.findIndex(h => h.includes('tarih'));
+      const descIdx   = headers.findIndex(h => h.includes('açıklama') || h.includes('işlem'));
+      const catIdx    = headers.findIndex(h => h.includes('kategori'));
+      const amountIdx = headers.findIndex(h => h.includes('tutar'));
+      const bonusIdx  = headers.findIndex(h => h.includes('bonus'));
+      const periodIdx = headers.findIndex(h => h.includes('dönem') || h.includes('period'));
+
+      const monthMap = {'01':'Ocak','02':'Şubat','03':'Mart','04':'Nisan','05':'Mayıs','06':'Haziran','07':'Temmuz','08':'Ağustos','09':'Eylül','10':'Ekim','11':'Kasım','12':'Aralık'};
+
+      function parseDate(val) {
+        if (!val) return '';
+        if (typeof val === 'number') {
+          const d = new Date((val - 25569) * 86400 * 1000);
+          return d.toISOString().split('T')[0];
+        }
+        const s = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const [d,m,y] = s.split('/'); return `${y}-${m}-${d}`; }
+        return s;
+      }
+
+      function parsePeriod(val, dateStr) {
+        if (val) {
+          const s = String(val).trim();
+          // Excel serial date for period
+          if (typeof val === 'number') {
+            const d = new Date((val - 25569) * 86400 * 1000);
+            const m = String(d.getMonth()+1).padStart(2,'0');
+            return (monthMap[m] || m) + ' ' + d.getFullYear();
+          }
+          // Already "Ocak 2026" style
+          if (/[A-Za-zğüşıöçĞÜŞİÖÇ]/.test(s)) return s;
+          // "2026-01-01" style
+          const match = s.match(/(\d{4})-(\d{2})/);
+          if (match) return (monthMap[match[2]] || match[2]) + ' ' + match[1];
+        }
+        // Derive from date
+        if (dateStr && /^\d{4}-\d{2}/.test(dateStr)) {
+          const [y, m] = dateStr.split('-');
+          return (monthMap[m] || m) + ' ' + y;
+        }
+        return '';
+      }
+
+      importParsedData = [];
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const row = rows[i];
+        const amount = parseFloat(row[amountIdx]) || 0;
+        if (amount === 0 && !row[descIdx]) continue;
+        const dateStr = parseDate(row[dateIdx]);
+        const period  = parsePeriod(periodIdx >= 0 ? row[periodIdx] : null, dateStr);
+        importParsedData.push({
+          date: dateStr,
+          description: String(row[descIdx] || '').trim(),
+          category: String(row[catIdx] || 'Diğer').trim(),
+          amount: Math.abs(amount),
+          bonus: parseFloat(row[bonusIdx]) || 0,
+          period: period,
+        });
+      }
+
+      if (!importParsedData.length) { showToast('Geçerli işlem bulunamadı', 'error'); return; }
+      showImportPreview();
+    } catch(err) {
+      showToast('Okuma hatası: ' + err.message, 'error');
+      document.getElementById('importActionBtn').disabled = false;
+      document.getElementById('importActionBtn').textContent = 'İçe Aktar';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportPreview() {
+  const periods = [...new Set(importParsedData.map(r => r.period).filter(Boolean))];
+  const total   = importParsedData.reduce((s,r) => s + r.amount, 0);
+  const bonus   = importParsedData.reduce((s,r) => s + r.bonus, 0);
+  const cats    = [...new Set(importParsedData.map(r => r.category))];
+
+  document.getElementById('importStep1').style.display = 'none';
+  document.getElementById('importStep2').style.display = '';
+  document.getElementById('importBackBtn').style.display = '';
+
+  document.getElementById('importPreviewTitle').textContent = `${importParsedData.length} işlem bulundu`;
+  document.getElementById('importPreviewSub').textContent = `${cats.length} farklı kategori`;
+  document.getElementById('importPeriodBadge').textContent = periods.join(' · ') || 'Dönem belirsiz';
+
+  // Stats
+  const statCard = (label, val, color) =>
+    `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;">${label}</div>
+      <div style="font-size:18px;font-weight:800;margin-top:4px;color:${color}">₺${fmt(total)}</div>
+    </div>`;
+  document.getElementById('importStats').innerHTML =
+    `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Toplam Tutar</div>
+      <div style="font-size:18px;font-weight:800;margin-top:4px;color:var(--accent-blue)">₺${fmt(total)}</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Toplam Bonus</div>
+      <div style="font-size:18px;font-weight:800;margin-top:4px;color:var(--accent-green)">₺${fmt(bonus)}</div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;">İşlem Sayısı</div>
+      <div style="font-size:18px;font-weight:800;margin-top:4px;color:var(--accent-purple)">${importParsedData.length}</div>
+    </div>`;
+
+  // Warning if period already exists
+  const existingPeriods = periods.filter(p => transactions.some(t => t.period === p));
+  const warnEl = document.getElementById('importWarning');
+  if (existingPeriods.length) {
+    warnEl.style.display = '';
+    warnEl.innerHTML = `⚠️ <b>${existingPeriods.join(', ')}</b> dönemi zaten mevcut. Bu ay verileri silinip yenisiyle değiştirilecek.`;
+  } else {
+    warnEl.style.display = 'none';
+  }
+
+  // Preview table (first 15 rows)
+  const preview = importParsedData.slice(0, 15);
+  document.getElementById('importPreviewBody').innerHTML = preview.map(r =>
+    `<tr style="border-top:1px solid var(--border);">
+      <td style="padding:7px 10px;color:var(--text-secondary);white-space:nowrap;">${r.date}</td>
+      <td style="padding:7px 10px;color:var(--text-primary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.description}">${r.description}</td>
+      <td style="padding:7px 10px;"><span style="padding:2px 8px;border-radius:10px;background:var(--bg-secondary);font-size:11px;color:var(--text-secondary);">${r.category}</span></td>
+      <td style="padding:7px 10px;text-align:right;font-weight:600;color:var(--accent-blue);">₺${fmt(r.amount)}</td>
+    </tr>`
+  ).join('');
+
+  const extra = importParsedData.length - 15;
+  document.getElementById('importPreviewNote').textContent = extra > 0 ? `+${extra} işlem daha...` : '';
+
+  document.getElementById('importActionBtn').disabled = false;
+  document.getElementById('importActionBtn').textContent = '✓ Ekle';
+}
+
+function doImport() {
+  if (!importParsedData.length) { showToast('Önce dosya seçin', 'error'); return; }
+
+  // Remove existing records for the same periods, then add new ones
+  const incomingPeriods = [...new Set(importParsedData.map(r => r.period).filter(Boolean))];
+  const kept = transactions.filter(t => !incomingPeriods.includes(t.period));
+  transactions = [...kept, ...importParsedData];
+  saveData(transactions);
+  closeImport();
+  globalPeriod = incomingPeriods[0] || '';
+  refreshAll();
+  showToast(`${importParsedData.length} işlem eklendi (${incomingPeriods.join(', ')}) 📊`, 'success');
+  importParsedData = [];
+}
+
+function exportData() { exportExcel(); }
+function importData() { importExcel(); }
+
+// ==================== TOAST ====================
+function showToast(msg, type='info') {
+  const container = document.getElementById('toasts');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ==================== THEME ====================
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  if (html.getAttribute('data-theme') === 'light') {
+    html.removeAttribute('data-theme');
+    btn.textContent = '🌙 Karanlık';
+    localStorage.setItem('dashboard_theme', 'dark');
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(42,54,84,0.5)';
+  } else {
+    html.setAttribute('data-theme', 'light');
+    btn.textContent = '☀️ Aydınlık';
+    localStorage.setItem('dashboard_theme', 'light');
+    Chart.defaults.color = '#475569';
+    Chart.defaults.borderColor = 'rgba(226,232,240,0.8)';
+  }
+  buildCharts();
+}
+
+function applyStoredTheme() {
+  const stored = localStorage.getItem('dashboard_theme');
+  const btn = document.getElementById('themeToggle');
+  if (stored === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    btn.textContent = '☀️ Aydınlık';
+    Chart.defaults.color = '#475569';
+    Chart.defaults.borderColor = 'rgba(226,232,240,0.8)';
+  }
+}
+
+// ==================== REFRESH ====================
+function refreshAll() {
+  buildKPI();
+  buildFilterOptions();
+  applyFilters();
+  buildCharts();
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleString('tr-TR');
+}
+
+// ==================== INIT ====================
+applyStoredTheme();
+refreshAll();
+</script>
+</body>
+</html>
