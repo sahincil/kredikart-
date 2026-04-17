@@ -7,6 +7,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey:            "AIzaSyA55N2FSlqPIcNe8aBi3EHjO1pG6HOUD98",
+    authDomain:        "veriler-7a724.firebaseapp.com",
+    databaseURL:       "https://veriler-7a724-default-rtdb.firebaseio.com",
+    projectId:         "veriler-7a724",
+    storageBucket:     "veriler-7a724.firebasestorage.app",
+    messagingSenderId: "817150941975",
+    appId:             "1:817150941975:web:4cae5b0f28e5656f197552"
+  };
+  firebase.initializeApp(firebaseConfig);
+  window._db = firebase.database();
+  window._dbReady = true;
+  console.log('Firebase Realtime Database bağlandı ✓');
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
   
@@ -868,22 +886,56 @@ const INITIAL_DATA = [
 
 // ==================== STORAGE ====================
 const STORAGE_KEY = 'garanti_dashboard_data';
+const DB_PATH = 'dashboard/transactions';
 
-function loadData() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try { return JSON.parse(stored); } catch(e) {}
+// ── Firebase Realtime Database helpers ───────────────────────────────────
+async function fbLoadTransactions() {
+  try {
+    showToast('Veriler yükleniyor...', 'info');
+    const snap = await window._db.ref(DB_PATH).get();
+    if (snap.exists()) {
+      const val = snap.val();
+      // val is an object {tx_00000: {...}, tx_00001: {...}, ...}
+      transactions = Object.values(val);
+    } else {
+      // First run: push INITIAL_DATA to Firebase
+      transactions = [...INITIAL_DATA];
+      await fbSaveAll(transactions);
+    }
+    filteredTx = [...transactions];
+    globalPeriod = '';
+    refreshAll();
+    showToast('Veriler yüklendi ✓', 'success');
+  } catch(e) {
+    showToast('Firebase okuma hatası: ' + e.message, 'error');
   }
-  return [...INITIAL_DATA];
+}
+
+async function fbSaveAll(data) {
+  try {
+    const obj = {};
+    data.forEach((tx, i) => {
+      obj['tx_' + String(i).padStart(5, '0')] = tx;
+    });
+    await window._db.ref(DB_PATH).set(obj);
+  } catch(e) {
+    showToast('Firebase yazma hatası: ' + e.message, 'error');
+    throw e;
+  }
 }
 
 function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  fbSaveAll(data);
+}
+
+function loadData() {
+  // Sync fallback for initial render before Firebase loads
+  return [...INITIAL_DATA];
 }
 
 function resetToInitial() {
-  localStorage.removeItem(STORAGE_KEY);
   transactions = [...INITIAL_DATA];
+  saveData(transactions);
   refreshAll();
   showToast('Veriler sıfırlandı', 'info');
 }
@@ -1791,7 +1843,18 @@ function refreshAll() {
 
 // ==================== INIT ====================
 applyStoredTheme();
-refreshAll();
+refreshAll(); // initial render with INITIAL_DATA
+// Load real data from Firebase
+document.addEventListener('DOMContentLoaded', () => {
+  if (window._dbReady) {
+    fbLoadTransactions();
+  } else {
+    // Wait for Firebase SDK to initialize
+    const t = setInterval(() => {
+      if (window._dbReady) { clearInterval(t); fbLoadTransactions(); }
+    }, 200);
+  }
+});
 </script>
 </body>
 </html>
