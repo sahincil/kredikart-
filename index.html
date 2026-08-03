@@ -497,7 +497,23 @@ const RAW_DATA = [{"tarih":"2026-01-01","islem":"Cep Şube Ödeme","kategori":"K
 </script>
 <script>
 /* ====================== STATE ====================== */
-let TX = RAW_DATA.map((d, i) => ({ id: 'r' + i, ...d }));
+const STORAGE_KEY = 'bankaEkstreDashboard_tx_v1';
+function loadTX(){
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const parsed = JSON.parse(saved);
+      if(Array.isArray(parsed)) return parsed;
+    }
+  }catch(e){ console.warn('Kayıtlı veri okunamadı, orijinal veriler kullanılıyor.', e); }
+  return RAW_DATA.map((d, i) => ({ id: 'r' + i, ...d }));
+}
+function saveTX(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(TX));
+  }catch(e){ console.warn('Veri kaydedilemedi.', e); }
+}
+let TX = loadTX();
 const MONTH_ORDER = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 const CAT_COLORS = {
   'Market': '#12855a', 'Market/Gıda': '#3ba372', 'Elektronik': '#2a6fb0', 'Ulaşım': '#c9a227',
@@ -673,6 +689,7 @@ function bindEvents(){
       return;
     }
     TX.push({ id:'r'+Date.now(), tarih, islem, kategori, tutar, donem });
+    saveTX();
     document.getElementById('addModal').classList.remove('show');
     document.getElementById('addIslem').value=''; document.getElementById('addTutar').value='';
     populatePeriodSelect(); document.getElementById('periodSelect').value = state.period;
@@ -861,6 +878,7 @@ function renderTransactions(){
 function deleteTx(id){
   if(!confirm('Bu işlemi silmek istediğinize emin misiniz?')) return;
   TX = TX.filter(t=>t.id!==id);
+  saveTX();
   renderAll();
 }
 function escapeHtml(s){
@@ -922,6 +940,7 @@ function normalizeAllText(){
   if(TX.length===0){ alert('Düzenlenecek veri yok.'); return; }
   if(!confirm(`Tüm işlem açıklamaları "İlk Harf Büyük, Diğerleri Küçük" formatına dönüştürülecek.\n\n${TX.length} işlem etkilenecek. Devam edilsin mi?`)) return;
   TX.forEach(t=>{ t.islem = trTitleCase(t.islem); });
+  saveTX();
   renderAll();
   alert(`${TX.length} işlem açıklaması düzenlendi.`);
 }
@@ -935,6 +954,7 @@ function deleteAllData(){
     return;
   }
   TX = [];
+  saveTX();
   state.period = 'Tümü';
   state.filters = { search:'', kategori:'', min:'', max:'', sort:'tarih_desc' };
   const fs=document.getElementById('fSearch'), fk=document.getElementById('fKategori'), fmin=document.getElementById('fMin'), fmax=document.getElementById('fMax'), fsort=document.getElementById('fSort');
@@ -1015,6 +1035,7 @@ function handleImportFile(e){
 function confirmImport(){
   if(!window._pendingImport || !window._pendingImport.length) return;
   TX = TX.concat(window._pendingImport);
+  saveTX();
   closeImportModal();
   renderAll();
 }
