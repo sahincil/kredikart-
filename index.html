@@ -498,15 +498,53 @@ const RAW_DATA = [{"tarih":"2026-01-01","islem":"Cep Şube Ödeme","kategori":"K
 <script>
 /* ====================== STATE ====================== */
 const STORAGE_KEY = 'bankaEkstreDashboard_tx_v1';
+const STORAGE_VERSION_KEY = 'bankaEkstreDashboard_ver_v1';
+function hashData(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return h.toString(36) + '_' + str.length;
+}
 function loadTX(){
+  const rawStr = JSON.stringify(RAW_DATA);
+  const currentVersion = hashData(rawStr);
+  const freshFromFile = () => RAW_DATA.map((d, i) => ({ id: 'r' + i, ...d }));
+
+  let saved = null, savedVersion = null;
   try{
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved){
-      const parsed = JSON.parse(saved);
-      if(Array.isArray(parsed)) return parsed;
-    }
-  }catch(e){ console.warn('Kayıtlı veri okunamadı, orijinal veriler kullanılıyor.', e); }
-  return RAW_DATA.map((d, i) => ({ id: 'r' + i, ...d }));
+    saved = localStorage.getItem(STORAGE_KEY);
+    savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+  }catch(e){ console.warn('Kayıtlı veri okunamadı.', e); }
+
+  if(!saved){
+    // İlk kez açılıyor: dosyadaki veriyle başla
+    try{ localStorage.setItem(STORAGE_VERSION_KEY, currentVersion); }catch(e){}
+    return freshFromFile();
+  }
+
+  let parsed;
+  try{ parsed = JSON.parse(saved); }catch(e){ parsed = null; }
+  if(!Array.isArray(parsed)) return freshFromFile();
+
+  if(savedVersion === currentVersion){
+    // Dosya değişmemiş: tarayıcıda kayıtlı (düzenlenmiş) veriyi kullan
+    return parsed;
+  }
+
+  // Dosyadaki veri, kayıtlı sürümden farklı — yani HTML dosyası güncellenmiş
+  const wantsUpdate = confirm(
+    'Bu sayfanın dosyasında yeni/güncel veriler tespit edildi.\n\n' +
+    '"Tamam" seçersen sayfa, dosyadaki GÜNCEL verilerle yenilenecek ' +
+    '(tarayıcıda daha önce yaptığın manuel ekleme/silme/düzenlemeler kaybolur).\n\n' +
+    '"İptal" seçersen tarayıcıda kayıtlı mevcut verilerle devam edilecek ' +
+    '(dosyadaki yeni veriler bu oturumda görünmeyecek).'
+  );
+  if(wantsUpdate){
+    try{ localStorage.setItem(STORAGE_VERSION_KEY, currentVersion); }catch(e){}
+    return freshFromFile();
+  } else {
+    try{ localStorage.setItem(STORAGE_VERSION_KEY, currentVersion); }catch(e){}
+    return parsed;
+  }
 }
 function saveTX(){
   try{
